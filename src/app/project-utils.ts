@@ -44,6 +44,36 @@ export const getUniqueProjectName = (
   return `${desiredName} ${suffix}`
 }
 
+const AUTO_PROJECT_NAME_PATTERN = /^new project(?: \d+)?$/
+
+/**
+ * True while the title is still one the app assigned itself — the seed project,
+ * an untitled one, or a "New Project 3". Only those may be replaced silently.
+ */
+const isAutoProjectName = (name: string) => {
+  const normalized = name.trim().toLocaleLowerCase('en-US')
+  return normalized === ''
+    || normalized === DEFAULT_PROJECT_NAME.toLocaleLowerCase('en-US')
+    || AUTO_PROJECT_NAME_PATTERN.test(normalized)
+}
+
+/**
+ * The title an AI generation run should leave behind: the app name the user
+ * entered, deduplicated against the other projects. Returns `null` when the
+ * title must stay untouched, so a name the user typed is never overwritten.
+ */
+export const resolveGeneratedProjectName = (
+  projects: ProjectSummary[],
+  currentProjectId: string,
+  currentName: string,
+  appName: string,
+): string | null => {
+  const desiredName = appName.trim()
+  if (!desiredName || !isAutoProjectName(currentName)) return null
+  const otherProjects = projects.filter((project) => project.id !== currentProjectId)
+  return getUniqueProjectName(otherProjects, desiredName)
+}
+
 export const formatProjectTime = (timestamp: number) => new Date(timestamp).toLocaleString('en-US', {
   day: 'numeric',
   month: 'short',

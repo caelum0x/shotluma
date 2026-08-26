@@ -337,7 +337,10 @@ export default function App() {
           controller={ai.controller}
           {...(ai.targetSlide ? { targetSlide: ai.targetSlide } : {})}
           onPrepareRun={ai.prepareRun}
-          onFinished={ai.handleFinished}
+          onFinished={(result) => {
+            ai.handleFinished(result.slidesCreated)
+            if (result.appName) project.applyGeneratedProjectName(result.appName)
+          }}
           onActivity={ai.handleActivity}
         />
       )}

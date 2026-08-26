@@ -90,7 +90,8 @@ export type AiGenerateModalProps = {
   /** `html` set means the target is an AI-authored HTML screen; edits then run the HTML toolset. */
   targetSlide?: { id: string; name: string; html?: string }
   onPrepareRun: (files: { name: string; dataUrl: string }[]) => Promise<{ assetId: string; name: string; dataUrl: string }[]>
-  onFinished: (slidesCreated: number) => void
+  /** `appName` is carried only by a generate run, so the project can adopt it as its title. */
+  onFinished: (result: { slidesCreated: number; appName?: string }) => void
   onActivity?: (activity: AiToolActivity | null) => void
 }
 
@@ -510,7 +511,10 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       setDoneInfo({ summary: event.summary, slidesCreated: event.slidesCreated })
       setPhase('done')
       onActivity?.(null)
-      onFinished(event.slidesCreated)
+      onFinished({
+        slidesCreated: event.slidesCreated,
+        ...(!isEditMode && appName.trim() ? { appName: appName.trim() } : {}),
+      })
     } else {
       setNarration(flushNarration)
       setErrorMessage(event.message)

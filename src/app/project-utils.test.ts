@@ -3,6 +3,7 @@ import {
   DEFAULT_PROJECT_NAME,
   getUniqueProjectName,
   loadInitialState,
+  resolveGeneratedProjectName,
   sortProjectSummaries,
   upsertProjectSummary,
 } from './project-utils'
@@ -103,5 +104,47 @@ describe('project utilities', () => {
 
     expect(getUniqueProjectName(projects, 'New Project')).toBe('New Project 3')
     expect(getUniqueProjectName(projects, 'Launch')).toBe('Launch')
+  })
+})
+
+describe('generated project names', () => {
+  const projects = [
+    summary('current', 'New Project 2', 3),
+    summary('other', 'Aurora', 2),
+    summary('third', 'Aurora 2', 1),
+  ]
+
+  it('adopts the app name while the title is still auto-assigned', () => {
+    expect(resolveGeneratedProjectName(projects, 'current', 'New Project 2', 'Lumen'))
+      .toBe('Lumen')
+    expect(resolveGeneratedProjectName(projects, 'current', 'New Project', 'Lumen'))
+      .toBe('Lumen')
+    expect(resolveGeneratedProjectName(projects, 'current', DEFAULT_PROJECT_NAME, 'Lumen'))
+      .toBe('Lumen')
+    expect(resolveGeneratedProjectName(projects, 'current', '   ', 'Lumen'))
+      .toBe('Lumen')
+  })
+
+  it('numbers the app name past the other projects that already use it', () => {
+    expect(resolveGeneratedProjectName(projects, 'current', 'New Project 2', 'aurora'))
+      .toBe('aurora 3')
+  })
+
+  it('ignores the current project when deduplicating', () => {
+    const named = [summary('current', 'New Project', 1)]
+
+    expect(resolveGeneratedProjectName(named, 'current', 'New Project', 'New Project'))
+      .toBe('New Project')
+  })
+
+  it('keeps a title the user typed', () => {
+    expect(resolveGeneratedProjectName(projects, 'other', 'Aurora', 'Lumen')).toBe(null)
+    expect(resolveGeneratedProjectName(projects, 'current', 'New Project Ideas', 'Lumen'))
+      .toBe(null)
+  })
+
+  it('keeps the title when no app name was entered', () => {
+    expect(resolveGeneratedProjectName(projects, 'current', 'New Project 2', '   '))
+      .toBe(null)
   })
 })

@@ -12,7 +12,12 @@ import {
   type ProjectSummary,
 } from '../persistence'
 import { uid } from '../utils'
-import { DEFAULT_PROJECT_NAME, getUniqueProjectName, upsertProjectSummary } from './project-utils'
+import {
+  DEFAULT_PROJECT_NAME,
+  getUniqueProjectName,
+  resolveGeneratedProjectName,
+  upsertProjectSummary,
+} from './project-utils'
 import { consumeShareLinkHash, decodeSharePayload } from './share-link'
 import type { Slide, UploadAsset } from '../types'
 import type { SaveStatus } from './project-types'
@@ -299,6 +304,16 @@ export function useProjectWorkspace({
     }, 'New project created', 'Couldn’t create project')
   }, [projects, runProjectTransition])
 
+  const applyGeneratedProjectName = useCallback((appName: string) => {
+    const nextName = resolveGeneratedProjectName(
+      projects,
+      currentProjectIdRef.current,
+      projectNameRef.current,
+      appName,
+    )
+    if (nextName) setProjectName(nextName)
+  }, [projects, setProjectName])
+
   const duplicateCurrentProject = useCallback(() => {
     const project = makeNewProject(
       getUniqueProjectName(
@@ -391,6 +406,7 @@ export function useProjectWorkspace({
     setDeleteDialogOpen,
     deletingProject,
     saveCurrentProject,
+    applyGeneratedProjectName,
     openProject,
     createNewProject,
     duplicateCurrentProject,
