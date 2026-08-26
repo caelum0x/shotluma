@@ -48,7 +48,7 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
   const { targetSlideId, enableOverlayAssets } = options
   const mission = targetSlideId
     ? `Your job is to edit the existing App Store screen with id "${targetSlideId}" according to the user's request.`
-    : 'Your job is to design a bold, cohesive set of App Store screenshots for the app the user describes.'
+    : 'Your job is to design a cohesive set of App Store screenshots for the app the user describes.'
   const process = targetSlideId
     ? `1. Call get_canvas_state first. It contains only the target screen and the uploaded asset ids available to this run.
 2. Work ONLY on slide "${targetSlideId}". You cannot create or delete slides, and you must not attempt to access another slide id.
@@ -59,9 +59,10 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
     : `1. The user message already lists every screenshot and logo asset available to this run. Do NOT modify or delete existing slides; create only NEW slides for this design.
 2. Decide how many screens to build yourself - typically 3 to 6, depending on how many screenshots were provided and how much story the app has to tell. Do not pad the set with filler screens just to hit a number.
 3. ART DIRECTION - commit to a concept before you build anything:
-   - Palette: background, text color, one accent. Be confident - a saturated brand color or a rich dark tone as a full-bleed background almost always beats a timid neutral. Take cues from the app's own screenshots, logo, and subject.
+   - Study the uploaded screenshots first. Unless the user asks for a different style, ADAPT THE APP'S OWN VISUAL STYLE: derive the palette, mood, and shape language from the app's actual UI, logo, and subject so the set feels native to the app rather than imposed on it.
+   - Palette: background, text color, one accent - taken from that app style.
    - One font pairing (a display face for headlines, a quieter face for supporting copy) and ONE highlight treatment.
-   - A composition plan: assign every slide an archetype from the library below. No two adjacent slides may use the same archetype, and a set should use at least 3 different ones.
+   - A composition plan: assign every slide an archetype from the library below, chosen to serve each slide's story role.
 4. In your FIRST tool turn, call declare_plan and add_slides together, in that order and exactly once each. Their screen lists must match. add_slides creates every planned screen at once and returns all ids in build order.
 5. In the next turn, build using those returned ids. Emit each slide's full planned composition as ONE batched turn (see "Batch your tool calls"), then run the verify routine before moving on.`
   const layoutContext = targetSlideId
@@ -76,7 +77,7 @@ export function buildInstructions(options: AiPromptOptions = {}): string {
     : 'After the LAST slide, do not re-render screens that already passed their preview. Their latest previews remain in the conversation; request another preview only if a later change affected that screen.'
   const consistency = targetSlideId
     ? 'Keep the screen consistent with its existing visual system unless the user explicitly requests a redesign.'
-    : 'Consistency lives in the SYSTEM, not in repeating one layout. Across every slide keep the same palette, the same font pairing, the same accent color, the same highlight treatment, the same device screenTheme, and a consistent shape vocabulary - while the composition changes from slide to slide via the archetypes.'
+    : 'Consistency comes first: across every slide keep the same palette, the same font pairing, the same accent color, the same highlight treatment, the same device screenTheme, and a consistent shape vocabulary. Repeating an archetype is fine when it serves the story - a cohesive set beats forced variety.'
   const brandRule = targetSlideId
     ? 'If the user provides an app name or logo for this edit, use them only when the requested change calls for branding updates.'
     : `BRANDING is required when the user provides an app name and/or logo:

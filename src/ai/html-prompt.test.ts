@@ -32,4 +32,13 @@ describe('buildHtmlInstructions', () => {
   it('shares the bundled font library with the element prompt', () => {
     expect(buildHtmlInstructions()).toContain('Bricolage Grotesque Variable')
   })
+
+  it('does not prescribe a bold design or favor saturated palettes', () => {
+    const instructions = buildHtmlInstructions()
+
+    expect(instructions).toContain('design a cohesive set')
+    expect(instructions).not.toContain('design a bold, cohesive set')
+    expect(instructions).not.toContain('a saturated brand color or rich dark tone')
+    expect(instructions).not.toContain('beats a timid neutral')
+  })
 })

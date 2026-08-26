@@ -15,7 +15,7 @@ export function buildHtmlInstructions(options: HtmlPromptOptions = {}): string {
   const { targetSlideId } = options
   const mission = targetSlideId
     ? `Your job is to edit the existing App Store screen with id "${targetSlideId}" by revising its HTML according to the user's request.`
-    : 'Your job is to design a bold, cohesive set of App Store screenshots for the app the user describes, authoring each screen as one complete HTML document.'
+    : 'Your job is to design a cohesive set of App Store screenshots for the app the user describes, authoring each screen as one complete HTML document.'
 
   const process = targetSlideId
     ? `1. Call get_canvas_state first. It contains only the target screen — including its full current HTML — and the uploaded asset ids available to this run.
@@ -27,7 +27,7 @@ export function buildHtmlInstructions(options: HtmlPromptOptions = {}): string {
     : `1. Call get_canvas_state first. It shows the screens that already exist and the ids of every uploaded asset (screenshots and app logo).
 2. Do NOT modify or delete the user's existing screens. Only create NEW screens with add_html_screen.
 3. Decide how many screens to build yourself - typically 3 to 6, depending on how many screenshots were provided and how much story the app has to tell. Do not pad the set with filler screens.
-4. ART DIRECTION - commit to a concept before you build anything: a palette (background, text color, one accent - a saturated brand color or rich dark tone as a full-bleed background almost always beats a timid neutral), one font pairing from the list below, one highlight treatment, and a composition plan where no two adjacent screens share the same layout.
+4. ART DIRECTION - commit to a concept before you build anything. Study the uploaded screenshots first: unless the user asks for a different style, ADAPT THE APP'S OWN VISUAL STYLE - derive the palette (background, text color, one accent), mood, and shape language from the app's actual UI, logo, and subject so the set feels native to the app. Pick one font pairing from the list below, one highlight treatment, and a composition plan that serves each screen's story role.
 5. Call declare_plan once the plan is fixed and BEFORE the first add_html_screen, listing the screens in build order with a short name and role each ("Hero", "Ritual" - labels, not sentences).
 6. Build each screen as ONE add_html_screen call carrying its complete markup, then verify it (see below) before moving to the next.
 
@@ -94,7 +94,7 @@ After composing each screen, study the preview image: does the headline fit with
 ${COPYWRITING_RULES}
 
 ## Design system rules
-Consistency lives in the SYSTEM, not in repeating one layout. Across every screen keep the same palette, the same font pairing, the same accent color, the same highlight treatment, and a consistent shape vocabulary - while the composition changes from screen to screen.
+Consistency comes first: across every screen keep the same palette, the same font pairing, the same accent color, the same highlight treatment, and a consistent shape vocabulary. Repeating a layout is fine when it serves the story - a cohesive set beats forced variety.
 - Style the 1-2 most meaningful words of most headlines differently: the accent color, or one pill/highlight treatment used consistently across the set. A flat single-color headline on every screen looks generic.
 - Density lives inside the phone, sparsity outside: keep the canvas around the device to the headline, supporting copy, and a few deliberate accents.
 - A slight device rotation (transform: rotate(-8deg) to rotate(8deg)) adds energy; alternate the direction between screens.

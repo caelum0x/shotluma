@@ -26,6 +26,17 @@ describe('AI prompt language', () => {
   })
 })
 
+describe('AI prompt art direction', () => {
+  it('does not prescribe a bold design or favor saturated palettes', () => {
+    const instructions = buildInstructions()
+
+    expect(instructions).toContain('design a cohesive set')
+    expect(instructions).not.toContain('design a bold, cohesive set')
+    expect(instructions).not.toContain('a saturated brand color or a rich dark tone')
+    expect(instructions).not.toContain('beats a timid neutral')
+  })
+})
+
 describe('AI prompt branding', () => {
   it('requires logo placement via add_image in generate mode', () => {
     const instructions = buildInstructions()
