@@ -93,6 +93,12 @@ export type AiGenerateModalProps = {
   /** `appName` is carried only by a generate run, so the project can adopt it as its title. */
   onFinished: (result: { slidesCreated: number; appName?: string }) => void
   onActivity?: (activity: AiToolActivity | null) => void
+  /**
+   * Reports the live run to the owner: a cancel handle while a run is active,
+   * null once it ends. The owner uses it to guard project switches and page
+   * unloads and to abort the run from outside the modal.
+   */
+  onRunStateChange: (control: { cancel: () => void } | null) => void
 }
 
 type ImageDropzoneProps = {
@@ -390,7 +396,7 @@ const ModalFooter = ({
   </>
 )
 
-export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity }: AiGenerateModalProps) => {
+export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrepareRun, onFinished, onActivity, onRunStateChange }: AiGenerateModalProps) => {
   const [appName, setAppName] = useState('')
   const [description, setDescription] = useState('')
   const [logo, setLogo] = useState<ImageDraft | null>(null)
@@ -537,6 +543,14 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
     abortControllerRef.current = abortController
     cancelledRef.current = false
     const wasCancelled = () => cancelledRef.current
+    // Registered before the first await so the run is cancellable (and its
+    // controller writes are permitted) from the very first mutation.
+    onRunStateChange({
+      cancel: () => {
+        cancelledRef.current = true
+        abortController.abort()
+      },
+    })
     setAssistantText('')
     setNarration(createNarrationState())
     setPlan([])
@@ -572,12 +586,14 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
       }
     } finally {
       runActiveRef.current = false
+      onRunStateChange(null)
     }
   }
 
   const handleCancel = () => {
     cancelledRef.current = true
     abortControllerRef.current?.abort()
+    onRunStateChange(null)
     setPhase('idle')
     onActivity?.(null)
   }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAiWorkflow } from './ai/use-ai-workflow'
+import { AiRunCancelDialog } from './app/AiRunCancelDialog'
 import { AppHeader } from './app/AppHeader'
 import { loadInitialState } from './app/project-utils'
 import { ProjectDeleteDialog } from './app/ProjectDeleteDialog'
@@ -58,12 +59,15 @@ export default function App() {
     clearSelection,
     setToast,
   })
-  const { close: closeAi, handleActivity: handleAiActivity } = ai
+  const { close: closeAi, handleActivity: handleAiActivity, cancelActiveRun: cancelAiRun, isRunActive: isAiRunActive } = ai
   const { commit, resetHistory } = history
 
   const handleProjectReplaced = useCallback((project: {
     slides: Slide[]
   }) => {
+    // Safety net: whatever replaced the project, a still-running generation
+    // must never write into the incoming project's slides.
+    cancelAiRun()
     const firstSlide = project.slides[0]
     setActiveSlideId(firstSlide?.id ?? '')
     clearSelection()
@@ -71,7 +75,7 @@ export default function App() {
     closeAi()
     resetHistory()
     if (project.slides.length === 0) setIsSidebarOpen(false)
-  }, [clearSelection, closeAi, handleAiActivity, resetHistory])
+  }, [cancelAiRun, clearSelection, closeAi, handleAiActivity, resetHistory])
 
   const project = useProjectWorkspace({
     initialProjectName: initial.projectName,
@@ -83,7 +87,25 @@ export default function App() {
     uploadsRef,
     onProjectReplaced: handleProjectReplaced,
     setToast,
+    isAiRunActive,
   })
+
+  // A project action requested while a generation is live first asks the user
+  // to give up the run; the confirmed action runs after the run is cancelled.
+  const [pendingProjectAction, setPendingProjectAction] = useState<{ run: () => void } | null>(null)
+  const guardProjectAction = useCallback((action: () => void) => {
+    if (isAiRunActive()) setPendingProjectAction({ run: action })
+    else action()
+  }, [isAiRunActive])
+
+  const { saveCurrentProject } = project
+  const wasAiRunActiveRef = useRef(false)
+  useEffect(() => {
+    // Autosaves during a run carry the interrupted-generation marker; one save
+    // after the run ends clears it so the next load shows no stale notice.
+    if (wasAiRunActiveRef.current && !ai.runActive) void saveCurrentProject()
+    wasAiRunActiveRef.current = ai.runActive
+  }, [ai.runActive, saveCurrentProject])
 
   const activeSlide = getActiveSlide(slides, activeSlideId)
   const selectedElement = activeSlide?.elements.find(
@@ -219,10 +241,11 @@ export default function App() {
         canUndo={history.canUndo}
         canRedo={history.canRedo}
         aiDisabled={aiActionsDisabled}
+        aiRunActive={ai.runActive}
         onProjectNameChange={project.setProjectName}
-        onOpenProject={project.openProject}
-        onCreateProject={project.createNewProject}
-        onDuplicateProject={project.duplicateCurrentProject}
+        onOpenProject={(projectId) => guardProjectAction(() => project.openProject(projectId))}
+        onCreateProject={() => guardProjectAction(project.createNewProject)}
+        onDuplicateProject={() => guardProjectAction(project.duplicateCurrentProject)}
         onShareProject={() => setShareDialogOpen(true)}
         onSaveProject={() => void project.saveCurrentProject(true)}
         onRequestProjectDeletion={() => project.setDeleteDialogOpen(true)}
@@ -330,6 +353,20 @@ export default function App() {
         onOpenChange={project.setDeleteDialogOpen}
         onConfirm={() => void project.deleteCurrentProject()}
       />
+      <AiRunCancelDialog
+        open={pendingProjectAction !== null}
+        projectName={project.projectName}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingProjectAction(null)
+        }}
+        onConfirm={() => {
+          const pending = pendingProjectAction
+          setPendingProjectAction(null)
+          if (!pending) return
+          cancelAiRun()
+          pending.run()
+        }}
+      />
       {ai.controller && ai.open && (
         <AiGenerateModal
           open={ai.open}
@@ -342,6 +379,7 @@ export default function App() {
             if (result.appName) project.applyGeneratedProjectName(result.appName)
           }}
           onActivity={ai.handleActivity}
+          onRunStateChange={ai.handleRunStateChange}
         />
       )}
       <div className="mobile-blocker">

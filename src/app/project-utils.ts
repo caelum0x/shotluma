@@ -32,6 +32,20 @@ export const upsertProjectSummary = (
   },
 ])
 
+/**
+ * Returns a copy of the project without the interrupted-generation marker, or
+ * null when the project carries none. The caller persists the cleared copy and
+ * shows the one-time interruption notice, so the marker never fires twice.
+ */
+export const consumeInterruptedGeneration = (
+  project: PersistedProject,
+): PersistedProject | null => {
+  if (!project.interruptedGeneration) return null
+  const { interruptedGeneration, ...cleared } = project
+  void interruptedGeneration
+  return cleared
+}
+
 export const getUniqueProjectName = (
   projects: ProjectSummary[],
   desiredName: string,

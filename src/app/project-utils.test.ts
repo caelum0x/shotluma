@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  consumeInterruptedGeneration,
   DEFAULT_PROJECT_NAME,
   getUniqueProjectName,
   loadInitialState,
@@ -146,5 +147,21 @@ describe('generated project names', () => {
   it('keeps the title when no app name was entered', () => {
     expect(resolveGeneratedProjectName(projects, 'current', 'New Project 2', '   '))
       .toBe(null)
+  })
+})
+
+describe('consumeInterruptedGeneration', () => {
+  it('returns null for a project without the marker', () => {
+    expect(consumeInterruptedGeneration(persistedProject('p1', 'Aurora', 10))).toBe(null)
+  })
+
+  it('strips the marker and keeps everything else', () => {
+    const project = { ...persistedProject('p1', 'Aurora', 10), interruptedGeneration: true as const }
+
+    const cleared = consumeInterruptedGeneration(project)
+
+    expect(cleared).toEqual(persistedProject('p1', 'Aurora', 10))
+    expect(cleared && 'interruptedGeneration' in cleared).toBe(false)
+    expect(project.interruptedGeneration).toBe(true)
   })
 })

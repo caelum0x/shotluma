@@ -28,4 +28,21 @@ describe('persisted project normalization', () => {
       savedAt: 20,
     })).toBeNull()
   })
+
+  it('carries the interrupted-generation marker only when it is exactly true', () => {
+    const record = {
+      id: 'project-run',
+      projectName: 'Mid-run project',
+      slides: [],
+      uploads: [],
+      createdAt: 10,
+      savedAt: 20,
+    }
+
+    expect(normalizePersistedProject({ ...record, interruptedGeneration: true }))
+      .toMatchObject({ interruptedGeneration: true })
+    expect(normalizePersistedProject(record)).not.toHaveProperty('interruptedGeneration')
+    expect(normalizePersistedProject({ ...record, interruptedGeneration: 'yes' }))
+      .not.toHaveProperty('interruptedGeneration')
+  })
 })

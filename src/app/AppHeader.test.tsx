@@ -42,6 +42,7 @@ const headerProps = {
   canUndo: false,
   canRedo: false,
   aiDisabled: false,
+  aiRunActive: false,
   onProjectNameChange: () => undefined,
   onOpenProject: () => undefined,
   onCreateProject: () => undefined,
@@ -97,5 +98,25 @@ describe('App header', () => {
     )
 
     expect(markup).toMatch(/aria-label="New project"[^>]*disabled/)
+  })
+
+  it('holds back project deletion while an AI generation is running', () => {
+    const markup = renderToStaticMarkup(
+      <AppHeader
+        {...headerProps}
+        projects={[...headerProps.projects, {
+          id: 'project-2',
+          projectName: 'Second project',
+          createdAt: 1_700_000_000_000,
+          savedAt: 1_700_000_000_000,
+        }]}
+        aiRunActive
+        saveStatus="saved"
+        persistenceReady
+      />,
+    )
+
+    expect(markup).toContain('Delete waits for the AI run')
+    expect(markup).not.toContain('Delete current project')
   })
 })

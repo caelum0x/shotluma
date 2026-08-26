@@ -75,23 +75,58 @@ export function useAiWorkflow({
   const activitySequence = useRef(0)
   const followedSlideId = useRef<string | null>(null)
   const preRunSlideIds = useRef<Set<string>>(new Set())
+  const [runActive, setRunActive] = useState(false)
+  const runControlRef = useRef<{ cancel: () => void } | null>(null)
+  const runActiveRef = useRef(false)
 
   useEffect(() => {
     setController(createAiController({
       getSlides: () => slidesRef.current,
+      // Writes are gated on the registered run: after an external cancel (for
+      // example a project switch) an in-flight tool result must not land in
+      // whatever project the refs point to by then.
       setSlides: (updater) => {
+        if (!runActiveRef.current) return
         const next = updater(slidesRef.current)
         slidesRef.current = next
         setSlides(next)
       },
       getUploads: () => uploadsRef.current,
       setUploads: (updater) => {
+        if (!runActiveRef.current) return
         const next = updater(uploadsRef.current)
         uploadsRef.current = next
         setUploads(next)
       },
     }))
   }, [setSlides, setUploads, slidesRef, uploadsRef])
+
+  const handleRunStateChange = useCallback((control: { cancel: () => void } | null) => {
+    runControlRef.current = control
+    runActiveRef.current = control !== null
+    setRunActive(control !== null)
+  }, [])
+
+  const isRunActive = useCallback(() => runActiveRef.current, [])
+
+  const cancelActiveRun = useCallback(() => {
+    const control = runControlRef.current
+    runControlRef.current = null
+    runActiveRef.current = false
+    setRunActive(false)
+    control?.cancel()
+    followedSlideId.current = null
+    setActivity(null)
+  }, [])
+
+  useEffect(() => {
+    if (!runActive) return
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [runActive])
 
   const targetSlide = targetSlideId
     ? slides.find((slide) => slide.id === targetSlideId)
@@ -196,6 +231,10 @@ export function useAiWorkflow({
     open,
     targetSlide,
     activity,
+    runActive,
+    isRunActive,
+    cancelActiveRun,
+    handleRunStateChange,
     handleActivity,
     prepareRun,
     openGenerator,

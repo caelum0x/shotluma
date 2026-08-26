@@ -86,6 +86,10 @@ An opt-in generate-dialog toggle lets the model author whole screens as HTML doc
 
 The controller adapter must update `slidesRef` synchronously before React state because multiple tool calls can read and write in one tick. Preserve the non-history adapter and create one checkpoint before a run so the entire generation remains one undo step.
 
+A run belongs to exactly one project, and the slide/upload refs are shared across project switches. `useAiWorkflow` therefore owns the run lifecycle: the modal registers a cancel handle for the live run (`onRunStateChange`), controller writes are gated on that registration, and `cancelActiveRun` must be called before any path that swaps the refs to another project — the confirm dialog covers user-initiated switches, and `handleProjectReplaced` is the unconditional safety net. Never let a generation write into a project it was not started in.
+
+Project switch, creation, and duplication during a live run go through the `AiRunCancelDialog` confirm; project deletion is disabled until the run ends; `beforeunload` warns only while a run is active. Saves during a run carry `PersistedProject.interruptedGeneration`, which is cleared by one save after the run ends and otherwise consumed on the next load with a one-time toast explaining the half-finished screens.
+
 Clear selection before generation and preview capture. Any live overlay must carry `data-ai-overlay` and remain filtered from preview and export.
 
 ## Canvas and prompt contract

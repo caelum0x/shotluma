@@ -17,6 +17,12 @@ export type PersistedProject = {
   uploads: UploadAsset[]
   createdAt: number
   savedAt: number
+  /**
+   * Set on saves that happen while an AI generation is running. A project that
+   * still carries it on load was closed mid-run, and the editor tells the user
+   * about the interrupted generation once before clearing it.
+   */
+  interruptedGeneration?: true
 }
 
 export type ProjectSummary = Pick<PersistedProject, 'id' | 'projectName' | 'createdAt' | 'savedAt'>
@@ -41,6 +47,7 @@ export const normalizePersistedProject = (value: unknown): PersistedProject | nu
     uploads: project.uploads,
     createdAt: typeof project.createdAt === 'number' ? project.createdAt : project.savedAt,
     savedAt: project.savedAt,
+    ...(project.interruptedGeneration === true ? { interruptedGeneration: true as const } : {}),
   }
 }
 

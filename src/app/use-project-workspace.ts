@@ -13,6 +13,7 @@ import {
 } from '../persistence'
 import { uid } from '../utils'
 import {
+  consumeInterruptedGeneration,
   DEFAULT_PROJECT_NAME,
   getUniqueProjectName,
   resolveGeneratedProjectName,
@@ -32,7 +33,16 @@ type ProjectWorkspaceOptions = {
   uploadsRef: RefObject<UploadAsset[]>
   onProjectReplaced: (project: PersistedProject) => void
   setToast: Dispatch<SetStateAction<string | null>>
+  /**
+   * True while an AI generation is running. Saves made during a run carry the
+   * interrupted-generation marker, so a project closed mid-run can explain the
+   * half-finished screens on its next load.
+   */
+  isAiRunActive: () => boolean
 }
+
+const INTERRUPTED_GENERATION_MESSAGE =
+  'The last AI generation was interrupted — finished screens were kept'
 
 const makeNewProject = (
   projectName: string,
@@ -111,6 +121,7 @@ export function useProjectWorkspace({
   uploadsRef,
   onProjectReplaced,
   setToast,
+  isAiRunActive,
 }: ProjectWorkspaceOptions) {
   const [projectName, setProjectNameState] = useState(initialProjectName)
   const projectNameRef = useRef(initialProjectName)
@@ -168,12 +179,17 @@ export function useProjectWorkspace({
 
         const sharedImport = await importSharedProjectOnce(workspace.projects)
         const imported = sharedImport.status === 'imported' ? sharedImport.project : null
-        const project = imported ?? workspace.activeProject ?? makeNewProject(
+        let project = imported ?? workspace.activeProject ?? makeNewProject(
           projectNameRef.current,
           slidesRef.current,
           uploadsRef.current,
         )
         if (!imported && !workspace.activeProject) await saveProject(project)
+        const interrupted = consumeInterruptedGeneration(project)
+        if (interrupted) {
+          project = interrupted
+          await saveProject(project)
+        }
         await setActiveProjectId(project.id)
         if (isCancelled()) return
 
@@ -185,6 +201,8 @@ export function useProjectWorkspace({
           setToast('Shared project imported as your own local copy')
         } else if (sharedImport.status === 'invalid') {
           setToast('Couldn’t open the shared project link')
+        } else if (interrupted) {
+          setToast(INTERRUPTED_GENERATION_MESSAGE)
         }
         if (sharedImport.status !== 'none') settleSharedImport()
         removeLegacyProject()
@@ -227,6 +245,7 @@ export function useProjectWorkspace({
       uploads: uploadsRef.current,
       createdAt: currentProjectCreatedAtRef.current,
       savedAt,
+      ...(isAiRunActive() ? { interruptedGeneration: true as const } : {}),
     }
 
     setSaveStatus('saving')
@@ -252,7 +271,7 @@ export function useProjectWorkspace({
       if (showConfirmation) setToast('Couldn’t save locally')
       return false
     }
-  }, [setToast, slidesRef, uploadsRef])
+  }, [isAiRunActive, setToast, slidesRef, uploadsRef])
 
   const runProjectTransition = useCallback(async (
     operation: () => Promise<PersistedProject>,
@@ -268,13 +287,18 @@ export function useProjectWorkspace({
 
     projectTransitionRef.current = true
     try {
-      const project = await operation()
+      let project = await operation()
+      const interrupted = consumeInterruptedGeneration(project)
+      if (interrupted) {
+        project = interrupted
+        await saveProject(project)
+      }
       await setActiveProjectId(project.id)
       skipNextAutoSaveRef.current = true
       replaceProject(project)
       setProjects((current) => upsertProjectSummary(current, project))
       setSaveStatus('saved')
-      setToast(successMessage)
+      setToast(interrupted ? INTERRUPTED_GENERATION_MESSAGE : successMessage)
     } catch {
       setSaveStatus('error')
       setToast(errorMessage)

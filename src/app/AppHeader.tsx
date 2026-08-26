@@ -43,6 +43,8 @@ type AppHeaderProps = {
   canUndo: boolean
   canRedo: boolean
   aiDisabled: boolean
+  /** True while an AI generation is running; project deletion is held back until it ends. */
+  aiRunActive: boolean
   onProjectNameChange: (name: string) => void
   onOpenProject: (projectId: string) => void
   onCreateProject: () => void
@@ -61,6 +63,7 @@ function ProjectMenu({
   projects,
   currentProjectId,
   disabled,
+  aiRunActive,
   onOpenProject,
   onCreateProject,
   onDuplicateProject,
@@ -71,6 +74,7 @@ function ProjectMenu({
   AppHeaderProps,
   | 'projects'
   | 'currentProjectId'
+  | 'aiRunActive'
   | 'onOpenProject'
   | 'onCreateProject'
   | 'onDuplicateProject'
@@ -133,11 +137,11 @@ function ProjectMenu({
         <DropdownMenuItem
           className="project-menu-action"
           variant="destructive"
-          disabled={disabled || projects.length <= 1}
+          disabled={disabled || projects.length <= 1 || aiRunActive}
           onClick={onRequestProjectDeletion}
         >
           <Trash2 size={15} />
-          <span>Delete current project</span>
+          <span>{aiRunActive ? 'Delete waits for the AI run' : 'Delete current project'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -212,6 +216,7 @@ export function AppHeader({
   canUndo,
   canRedo,
   aiDisabled,
+  aiRunActive,
   onProjectNameChange,
   onOpenProject,
   onCreateProject,
@@ -262,6 +267,7 @@ export function AppHeader({
                 projects={projects}
                 currentProjectId={currentProjectId}
                 disabled={projectMenuDisabled}
+                aiRunActive={aiRunActive}
                 onOpenProject={onOpenProject}
                 onCreateProject={onCreateProject}
                 onDuplicateProject={onDuplicateProject}
