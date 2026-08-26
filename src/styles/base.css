@@ -712,6 +712,14 @@ button:disabled { cursor: not-allowed; opacity: .35; }
   line-height: 1.35;
   color: var(--muted);
 }
+.ai-modal-overlay-toggle__copy .ai-modal-overlay-toggle__caution {
+  font-weight: 600;
+  color: #0369a1;
+}
+.ai-modal-overlay-toggle .ai-modal-overlay-toggle__badge {
+  background: #e0f2fe;
+  color: #0369a1;
+}
 .ai-modal-copy-prompt {
   display: inline-flex;
   align-items: center;

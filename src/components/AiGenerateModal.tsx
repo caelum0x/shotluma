@@ -329,11 +329,11 @@ const IdleContent = ({
           onCheckedChange={onEnableHtmlScreensChange}
         />
         <label htmlFor="ai-modal-html-screens" className="ai-modal-overlay-toggle__copy">
-          <b>HTML screens <Badge variant="secondary">Experimental</Badge></b>
+          <b>HTML screens <Badge variant="secondary" className="ai-modal-overlay-toggle__badge">Experimental</Badge></b>
           <span>
             The AI designs each screen as free-form HTML and CSS instead of canvas elements — often bolder layouts and typography.
           </span>
-          <small>
+          <small className="ai-modal-overlay-toggle__caution">
             HTML screens can only be edited with AI, not by hand.
           </small>
         </label>
@@ -404,7 +404,7 @@ export const AiGenerateModal = ({ open, onClose, controller, targetSlide, onPrep
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [doneInfo, setDoneInfo] = useState<{ summary: string; slidesCreated: number } | null>(null)
   const [selection, setSelection] = useState<AiModelSelection>(INITIAL_AI_SELECTION)
-  const [enableHtmlScreens, setEnableHtmlScreens] = useState(false)
+  const [enableHtmlScreens, setEnableHtmlScreens] = useState(true)
   const [keysRevision, setKeysRevision] = useState(0)
   const [keysDialogOpen, setKeysDialogOpen] = useState(false)
   const [keysDialogInstance, setKeysDialogInstance] = useState(0)

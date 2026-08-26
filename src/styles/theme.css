@@ -897,6 +897,16 @@ select:focus-visible {
 .ai-modal-overlay-toggle__copy small,
 .ai-modal-copy-prompt { color: var(--muted-foreground); }
 
+/* Light-blue "Experimental" badge and the matching caution line; the sky hue
+   is mixed with the theme tokens so both light and dark mode stay legible. */
+.ai-modal-overlay-toggle .ai-modal-overlay-toggle__badge {
+  background: color-mix(in oklch, oklch(0.68 0.13 240) 22%, var(--background));
+  color: color-mix(in oklch, oklch(0.68 0.13 240) 65%, var(--foreground));
+}
+.ai-modal-overlay-toggle__copy .ai-modal-overlay-toggle__caution {
+  color: color-mix(in oklch, oklch(0.68 0.13 240) 55%, var(--foreground));
+}
+
 .ai-provider-description { color: var(--muted-foreground); }
 
 .ai-provider-warning {
