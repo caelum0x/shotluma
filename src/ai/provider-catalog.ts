@@ -81,7 +81,7 @@ const STANDARD_REASONING_EFFORTS = [
   'xhigh',
 ] as const satisfies readonly AiReasoningEffort[]
 
-/** GPT-5.6 Luna / Terra / Sol: low … xhigh / max (`max` via providerOptions). */
+/** GPT-6 Astra and GPT-5.6: low … xhigh / max (`max` via providerOptions). */
 const OPENAI_REASONING_EFFORTS = [
   'low',
   'medium',
@@ -127,10 +127,17 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         reasoningEfforts: OPENAI_REASONING_EFFORTS,
       },
       {
+        id: 'codex/gpt-6-astra',
+        providerModelId: 'gpt-6-astra',
+        label: 'GPT-6 Astra',
+        description: 'Most capable · uses your ChatGPT plan',
+        reasoningEfforts: OPENAI_REASONING_EFFORTS,
+      },
+      {
         id: 'codex/gpt-5.6-sol',
         providerModelId: 'gpt-5.6-sol',
         label: 'GPT-5.6 Sol',
-        description: 'Highest quality · uses your ChatGPT plan',
+        description: 'Previous flagship · uses your ChatGPT plan',
         reasoningEfforts: OPENAI_REASONING_EFFORTS,
       },
       {
@@ -225,9 +232,15 @@ export const AI_PROVIDERS: readonly AiProviderOption[] = [
         reasoningEfforts: OPENAI_REASONING_EFFORTS,
       },
       {
+        id: 'gpt-6-astra',
+        label: 'GPT-6 Astra',
+        description: 'Most capable for complex agentic work',
+        reasoningEfforts: OPENAI_REASONING_EFFORTS,
+      },
+      {
         id: 'gpt-5.6-sol',
         label: 'GPT-5.6 Sol',
-        description: 'Highest quality for agentic work',
+        description: 'Previous flagship for agentic work',
         reasoningEfforts: OPENAI_REASONING_EFFORTS,
       },
       {

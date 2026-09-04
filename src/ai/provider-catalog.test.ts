@@ -56,6 +56,26 @@ describe('AI provider catalog', () => {
       id: 'codex/gpt-5.6-terra',
       providerModelId: 'gpt-5.6-terra',
     })
+    expect(getAiProvider('codex').models.map((model) => model.id)).toEqual([
+      'codex/gpt-5.6-terra',
+      'codex/gpt-6-astra',
+      'codex/gpt-5.6-sol',
+      'codex/gpt-5.6-luna',
+    ])
+    expect(getAiProvider('openai').models.map((model) => model.id)).toEqual([
+      'gpt-5.6-terra',
+      'gpt-6-astra',
+      'gpt-5.6-sol',
+      'gpt-5.6-luna',
+    ])
+    expect(getAiModel({ provider: 'codex', model: 'codex/gpt-6-astra' })).toMatchObject({
+      providerModelId: 'gpt-6-astra',
+      reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    })
+    expect(getAiModel({ provider: 'openai', model: 'gpt-6-astra' })).toMatchObject({
+      label: 'GPT-6 Astra',
+      reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    })
     expect(getAiProvider('xai').models.map((model) => model.id)).toEqual([
       'grok-4.6',
       'grok-4.5',
@@ -160,6 +180,7 @@ describe('AI provider catalog', () => {
       ['low', 'medium', 'high', 'xhigh', 'max'],
       ['low', 'medium', 'high', 'xhigh', 'max'],
       ['low', 'medium', 'high', 'xhigh', 'max'],
+      ['low', 'medium', 'high', 'xhigh', 'max'],
     ])
     expect(getAiProvider('moonshot').models[0]?.reasoningEfforts).toEqual([
       'low',
@@ -185,6 +206,16 @@ describe('AI provider catalog', () => {
       model: 'gpt-5.6-sol',
       reasoningEffort: 'xhigh',
     })).toBe('xhigh')
+    expect(getAiSdkReasoningEffort({
+      provider: 'openai',
+      model: 'gpt-6-astra',
+      reasoningEffort: 'minimal',
+    })).toBe('high')
+    expect(getAiSdkReasoningEffort({
+      provider: 'openai',
+      model: 'gpt-6-astra',
+      reasoningEffort: 'max',
+    })).toBe('max')
     expect(getAiSdkReasoningEffort({
       provider: 'openai',
       model: 'gpt-5.6-luna',

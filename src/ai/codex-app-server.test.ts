@@ -222,6 +222,41 @@ describe('Codex App Server adapter', () => {
     })
   })
 
+  it('forwards GPT-6 Astra to the Codex thread and turn', async () => {
+    const { client, requests } = createClient((method, _params, _signal, emit) => {
+      if (method === 'account/read') {
+        return { account: { type: 'chatgpt', email: null, planType: 'plus' } }
+      }
+      if (method === 'thread/start') return { thread: { id: 'thread-1' } }
+      if (method === 'turn/start') {
+        emit({
+          method: 'turn/completed',
+          params: { threadId: 'thread-1', turnId: 'turn-1', turn: { status: 'completed' } },
+        })
+        return { turn: { id: 'turn-1' } }
+      }
+      return {}
+    })
+
+    await runCodexAppServerGeneration({
+      ...baseGenerationOptions(),
+      selection: {
+        provider: 'codex',
+        model: 'codex/gpt-6-astra',
+        reasoningEffort: 'max',
+      },
+      client,
+    })
+
+    expect(requests.find((request) => request.method === 'thread/start')?.params).toMatchObject({
+      model: 'gpt-6-astra',
+    })
+    expect(requests.find((request) => request.method === 'turn/start')?.params).toMatchObject({
+      model: 'gpt-6-astra',
+      effort: 'max',
+    })
+  })
+
   it('interrupts a turn when cancellation lands before the turn id is assigned', async () => {
     const abortController = new AbortController()
     let markTurnStarted: (() => void) | null = null
